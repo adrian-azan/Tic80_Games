@@ -8,7 +8,7 @@ class LetterBoard extends Grid
         local width = 5
         local letter = 65
 
-        base.constructor(height,width)        
+        base.constructor(height,width)
         name = ""
 
         //Setup letters A-Z
@@ -95,10 +95,15 @@ class LetterBoard extends Grid
 
         if (result == "<-" && name.len() > 0)
             name = name.slice(0,-1)
-        else if (result == "Enter")
-            trace("Entered")
         else if (name.len() <= 5 && result != "<-")
             name += focus.data.A()
+    }
+
+    function Y(...)
+    {
+        STATE = 0
+        vargv[0].players.focus.data.text = name
+        vargv[0].focus = vargv[0].players
     }
 
     function B(...)

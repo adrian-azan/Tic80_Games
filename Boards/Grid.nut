@@ -21,8 +21,8 @@ class Node
 class Grid
 {
     nodes = null
-    focus = null
     size = null
+    focus = null
 
     constructor()
     {
@@ -33,19 +33,17 @@ class Grid
 
     constructor(rows,cols)
     {
-        size = 0
+        size = rows
         nodes = array(rows)
 
         local current;
         for (local r = 0; r < rows; r++ )
         {
             nodes[r] = Node()
-            size += 1
             current = nodes[r]
-            for (local c = 0; c < cols-1; c++ )
+            for (local c = 0; c < cols-1; c++, size++ )
             {
                 current.r = Node()
-                size += 1
                 current.r.l = current
                 current = current.r
             }
@@ -61,7 +59,7 @@ class Grid
         size = original
     }
 
-  
+
 
     function DrawHelp(current,focused)
     {
@@ -80,7 +78,7 @@ class Grid
         DrawHelp(current.b,focused)
         DrawHelp(current.l,focused)
         current.touched = false
-    }   
+    }
 
     function A(...)
     {
@@ -119,7 +117,7 @@ class Grid
         if (focus.r != null)
             focus = focus.r
     }
-    
+
     function Prev()
     {
         if (focus.l != null)

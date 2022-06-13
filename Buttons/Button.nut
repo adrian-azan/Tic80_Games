@@ -4,6 +4,7 @@ class Button extends Clickable
     constructor(xpos,ypos,s,sp)
     {
         base.constructor(xpos,ypos,s)
+        trace(sp)
         sprite=sp
     }
 

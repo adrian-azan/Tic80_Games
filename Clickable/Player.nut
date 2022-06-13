@@ -17,7 +17,7 @@ class Player extends Clickable
     }
 
     function A(...)
-    {        
+    {
         vargv[0][color] = true
 
         color = clamp(color+1, MINCOLR, 16)
@@ -30,6 +30,13 @@ class Player extends Clickable
     function Y(...)
     {
         STATE = 1
+        vargv[0].letters.name = text
+        vargv[0].focus = vargv[0].letters
+    }
+
+    function B(...)
+    {
+        vargv[0].PopPlayer(this)
     }
 
     function Draw()
@@ -42,5 +49,5 @@ class Player extends Clickable
     {
         rect(x,y,size[0],size[1],color)
         print(text+": "+points,x+2,y+size[1]/3,0)
-    }   
+    }
 }

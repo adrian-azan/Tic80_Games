@@ -48,8 +48,41 @@ class RacerBoard extends Grid
         }
     }
 
+    function RandomBoard()
+    {
+        for (local i = 0; i < 500; i ++)
+        {
+            local sourceRow = rand() % racerNames.len()
+            local sourceCol = rand() % racerNames[sourceRow].len()
+
+            local targetRow = rand() % racerNames.len()
+            local targetCol = rand() % racerNames[targetRow].len()
+
+            local temp = racerNames[targetRow][targetCol]
+            racerNames[targetRow][targetCol] = racerNames[sourceRow][sourceCol]
+            racerNames[sourceRow][sourceCol] = temp
+        }
+
+        Rename()
+    }
+
+    function Rename()
+    {
+        local current = null
+        for (local r=0; r < 6; r++)
+        {
+            current = nodes[r]
+            for (local c=0; c < 7;c++)
+            {
+                current.data.text = racerNames[r][c]
+                current = current.r
+            }
+        }
+    }
+
     function Draw(focused = true)
     {
+        Rename()
         base.Draw(focused)
     }
 

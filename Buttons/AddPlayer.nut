@@ -17,17 +17,13 @@ class AddPlayer extends Button
         players.Pop()
     }
 
-    function Draw()
-    {
-        base.Draw()
-    }       
 
     function DrawH()
     {
         base.DrawH()
-        
+
         print("A: Add",x,y+size[1]+2)
         print("B: Remove",x,y+size[1]+10)
     }
-    
+
 }
