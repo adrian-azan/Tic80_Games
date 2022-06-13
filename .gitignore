@@ -3,3 +3,6 @@ Manual.odg
 tq-bundler.exe
 BoardGame.code-workspace
 .vscode/settings.json
+Release/*
+*.odg#
+*.zip

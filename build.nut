@@ -3,11 +3,16 @@
 // Code changes will be overwritten
 //
 
-// title:   game title
-// author:  game developer, email, etc.
-// desc:    short description
-// site:    website link
-// license: MIT License (change this to your license of choice)
+//
+// Bundle file
+// Code changes will be overwritten
+//
+
+// title:   Mario Kart Super Board
+// author:  Adrian Azan
+// desc:    Small board game template
+// site:    adrian-azan.com
+// license: MIT License
 // version: 0.1
 // script:  squirrel
 
@@ -21,19 +26,12 @@ local BCKGRND = 11
 local BRDCOLR = 13
 local MINCOLR = 1
 
-local clicked = null
-local playerHead = null
-local racerNames = null
-local players = null
-local letterBoard = null
-
-
 local STATE = 0
 local CONTROLLER = null
 local GAME = null
 
 
-racerNames = array(6)
+local racerNames = array(6)
 racerNames[0] = ["MAR","LUI","PEA","DAI",
             "ROS","TAR","TEA"]
 racerNames[1] = ["YOS","TOA","KOO","SHY",
@@ -62,7 +60,6 @@ function clamp(x,min,max)
         return min
     return x
 }
-
 
 // [included Clickable.Clickable]
 
@@ -164,7 +161,7 @@ class Player extends Clickable
     }
 
     function A(...)
-    {        
+    {
         vargv[0][color] = true
 
         color = clamp(color+1, MINCOLR, 16)
@@ -177,6 +174,13 @@ class Player extends Clickable
     function Y(...)
     {
         STATE = 1
+        vargv[0].letters.name = text
+        vargv[0].focus = vargv[0].letters
+    }
+
+    function B(...)
+    {
+        vargv[0].PopPlayer(this)
     }
 
     function Draw()
@@ -189,7 +193,7 @@ class Player extends Clickable
     {
         rect(x,y,size[0],size[1],color)
         print(text+": "+points,x+2,y+size[1]/3,0)
-    }   
+    }
 }
 // [/included Clickable.Player]
 // [included Clickable.Tile]
@@ -232,6 +236,7 @@ class Button extends Clickable
     constructor(xpos,ypos,s,sp)
     {
         base.constructor(xpos,ypos,s)
+        trace(sp)
         sprite=sp
     }
 
@@ -267,22 +272,27 @@ class AddPlayer extends Button
         players.Pop()
     }
 
-    function Draw()
-    {
-        base.Draw()
-    }       
 
     function DrawH()
     {
         base.DrawH()
-        
+
         print("A: Add",x,y+size[1]+2)
         print("B: Remove",x,y+size[1]+10)
     }
-    
+
 }
 // [/included Buttons.AddPlayer]
+// [included Buttons.Randomize]
 
+class Randomize extends Button
+{
+    function A(...)
+    {
+        vargv[1].RandomBoard()
+    }
+}
+// [/included Buttons.Randomize]
 
 // [included Boards.Grid]
 
@@ -309,8 +319,8 @@ class Node
 class Grid
 {
     nodes = null
-    focus = null
     size = null
+    focus = null
 
     constructor()
     {
@@ -321,19 +331,17 @@ class Grid
 
     constructor(rows,cols)
     {
-        size = 0
+        size = rows
         nodes = array(rows)
 
         local current;
         for (local r = 0; r < rows; r++ )
         {
             nodes[r] = Node()
-            size += 1
             current = nodes[r]
-            for (local c = 0; c < cols-1; c++ )
+            for (local c = 0; c < cols-1; c++, size++ )
             {
                 current.r = Node()
-                size += 1
                 current.r.l = current
                 current = current.r
             }
@@ -349,7 +357,7 @@ class Grid
         size = original
     }
 
-  
+
 
     function DrawHelp(current,focused)
     {
@@ -368,7 +376,7 @@ class Grid
         DrawHelp(current.b,focused)
         DrawHelp(current.l,focused)
         current.touched = false
-    }   
+    }
 
     function A(...)
     {
@@ -407,7 +415,7 @@ class Grid
         if (focus.r != null)
             focus = focus.r
     }
-    
+
     function Prev()
     {
         if (focus.l != null)
@@ -427,7 +435,7 @@ class LetterBoard extends Grid
         local width = 5
         local letter = 65
 
-        base.constructor(height,width)        
+        base.constructor(height,width)
         name = ""
 
         //Setup letters A-Z
@@ -514,10 +522,15 @@ class LetterBoard extends Grid
 
         if (result == "<-" && name.len() > 0)
             name = name.slice(0,-1)
-        else if (result == "Enter")
-            trace("Entered")
         else if (name.len() <= 5 && result != "<-")
             name += focus.data.A()
+    }
+
+    function Y(...)
+    {
+        STATE = 0
+        vargv[0].players.focus.data.text = name
+        vargv[0].focus = vargv[0].players
     }
 
     function B(...)
@@ -547,7 +560,8 @@ class LetterBoard extends Grid
 class PlayerBoard extends Grid
 {
     focus = null
-    addPlayer = null    
+    addPlayer = null
+    randomize = null
     colors = null
 
     constructor()
@@ -558,13 +572,20 @@ class PlayerBoard extends Grid
         focus = nodes[0]
 
         addPlayer = Node()
-        
-        addPlayer.data = AddPlayer([16,16],0,this)      
+        addPlayer.data = AddPlayer([16,16],0,this)
 
-   
+        randomize = Node()
+        randomize.data = Randomize(0,0,[16,16],2)
+
+
         addPlayer.b = nodes[0]
         addPlayer.t = nodes[0]
-      
+        addPlayer.r = randomize
+
+        randomize.b = nodes[0]
+        randomize.t = nodes[0]
+        randomize.l = addPlayer
+
         nodes[0].t = addPlayer
         nodes[0].b = addPlayer
 
@@ -590,7 +611,7 @@ class PlayerBoard extends Grid
     {
         if (size >= 11)
             return null
-            
+
         local end = addPlayer.t
         end.b = Node()
         end.b.t = end;
@@ -598,7 +619,8 @@ class PlayerBoard extends Grid
         end = end.b
         end.b = addPlayer
 
-        addPlayer.t = end       
+        addPlayer.t = end
+        randomize.t = end
 
         end.data = Player(end.t.data.x,end.t.data.y+12,[50,10],"TEMP",MINCOLR)
         end.data.A(colors)
@@ -614,7 +636,7 @@ class PlayerBoard extends Grid
         local end = addPlayer.t
         end.t.b = addPlayer
         addPlayer.t = end.t
- 
+
         colors[end.data.color] = true
 
         end = null
@@ -623,43 +645,70 @@ class PlayerBoard extends Grid
     }
 
     function A(...)
-    {       
-        focus.data.A(colors)
+    {
+        focus.data.A(colors,vargv[0])
     }
 
     function B(...)
     {
-        focus.data.B()
+        focus.data.B(this)
     }
 
     function Y(...)
     {
-        focus.data.Y()
+        focus.data.Y(vargv[0])
+    }
+
+    function PopPlayer(target)
+    {
+        local current = nodes[0].b
+        while(current != addPlayer)
+        {
+            if (current.data == target)
+            {
+                current.t.b = current.b
+                current.b.t = current.t
+
+                focus = current.t
+                colors[current.data.color] = true
+                size -= 1
+                break
+            }
+            current = current.b
+        }
+
+        while(current != addPlayer)
+        {
+            current.data.y -= 12
+            current = current.b
+        }
     }
 
     function Move()
     {
         addPlayer.data.x = addPlayer.t.data.x
-        addPlayer.data.y = addPlayer.t.data.y + 20      
+        addPlayer.data.y = addPlayer.t.data.y + 20
+
+        randomize.data.x = addPlayer.data.x + 20
+        randomize.data.y = addPlayer.data.y
     }
 
     function CalcPoints(board)
     {
         local player = nodes[0]
         local racer = null
-        trace(board.nodes.len())
         while (player != nodes[0].t)
         {
-       
+
             player.data.points = 0
             for (local r = 0; r < board.nodes.len(); r++)
             {
                 //start off at second racer in row
                 racer = board.nodes[r].r
-              
+
                 while(racer != null && racer != board.nodes[r])
                 {
-                    
+
                     if (player.data == racer.data.owner)
                        player.data.points += 1
                     racer = racer.r
@@ -722,8 +771,41 @@ class RacerBoard extends Grid
         }
     }
 
+    function RandomBoard()
+    {
+        for (local i = 0; i < 500; i ++)
+        {
+            local sourceRow = rand() % racerNames.len()
+            local sourceCol = rand() % racerNames[sourceRow].len()
+
+            local targetRow = rand() % racerNames.len()
+            local targetCol = rand() % racerNames[targetRow].len()
+
+            local temp = racerNames[targetRow][targetCol]
+            racerNames[targetRow][targetCol] = racerNames[sourceRow][sourceCol]
+            racerNames[sourceRow][sourceCol] = temp
+        }
+
+        Rename()
+    }
+
+    function Rename()
+    {
+        local current = null
+        for (local r=0; r < 6; r++)
+        {
+            current = nodes[r]
+            for (local c=0; c < 7;c++)
+            {
+                current.data.text = racerNames[r][c]
+                current = current.r
+            }
+        }
+    }
+
     function Draw(focused = true)
     {
+        Rename()
         base.Draw(focused)
     }
 
@@ -740,51 +822,6 @@ class RacerBoard extends Grid
     }
 }
 // [/included Boards.RacerBoard]
-
-
-
-
-
-class Controller
-{
-    function Input(id)
-    {
-        if (clicked == true)
-            return false
-
-        local md = mouse()
-        local hover = false//md[0] > x && md[0] < x+size[0] && md[1] > y && md[1] < y+size[1]
-        local gamePad = (btnp(id,120,30) && focus == true)
-
-        //A
-        if ( id == 4 && ((md[2] == true && hover) || gamePad))
-            return true
-
-        //X
-        if ( id == 6 && ((md[3] == true && hover) || gamePad))
-            return true
-
-        //B
-        if ( id == 5 && ((md[4] == true && hover)  || gamePad))
-            return true
-
-        //UP
-        if ( id == 0 && ( key(58+id)  || btnp(id,120,10) ))
-            return true
-        //DOWN
-        if ( id == 1 && ( key(58+id)  || btnp(id,120,30) ))
-            return true
-        //LEFT
-        if ( id == 2 && ( key(58+id)  || btnp(id,120,30) ))
-            return true
-        //RIGHT
-        if ( id == 3 && ( key(58+id)  || btnp(id,120,30) ))
-            return true
-        return false
-    }
-}
-
-
 
 
 class Game
@@ -806,7 +843,7 @@ class Game
     function Draw()
     {
         if (STATE == 0)
-        { 
+        {
             players.CalcPoints(board)
             players.Draw(true)
             board.Draw(board == focus)
@@ -821,63 +858,32 @@ class Game
     function UPDATE()
     {
         if (btnp(0,30,15))
-        {
             focus.Asc()
-        }
 
         if (btnp(1,30,15))
-        {
             focus.Des()
-        }
+
 
         if (btnp(2,30,15))
-        {
             focus.Prev()
-        }
 
         if (btnp(3,30,15))
-        {
             focus.Next()
-        }
 
         if (btnp(4))
-        {            
             focus.A(board,players)
-        }
 
         if (btnp(5))
-        {
             focus.B()
-        }
 
         if (btnp(7))
-        {
-            if (focus == players)
-            {
-                focus = letters
-                letters.name = players.focus.data.text
-                STATE = 1
-            }
+            focus.Y(this)
 
-            else if (focus == letters)
-            {
-                focus = players
-                players.focus.data.text = letters.name
-                STATE = 0
-            }
-        }
+        if (btn(6) && STATE == 0)
+            focus = board
 
-        if (btnp(6))
-        {
-            if (focus == players)
-            {
-                focus = board
-            }
-            else if (focus == board)
-            {
-                focus = players
-            }
-        }
+        else if (!btn(6) && STATE == 0)
+            focus = players
     }
 }
 
@@ -891,7 +897,7 @@ function TIC()
 
     GAME.UPDATE()
     GAME.Draw()
- 
+
 }
 
 
@@ -899,21 +905,31 @@ function TIC()
 // <TILES>
 // 000:ffffffffffffffffff000000ff000006ff000006ff000006ff000006ff066666
 // 001:ffffffffffffffff000000ff600000ff600000ff600000ff600000ff666660ff
-// 002:ffffffffffffffffff000000ff000000ff000000ff000000ff000000ff000000
-// 003:ffffffffffffffff000000ff000000ff000000ff000000ff000000ff000000ff
+// 002:ffffffffffffffffff000000ff000000ff660000ff006000ff000600ff000066
+// 003:ffffffffffffffff000600ff000060ff006666ff060060ff600600ff000000ff
 // 016:ff066666ff000006ff000006ff000006ff000006ff000000ffffffffffffffff
 // 017:666660ff600000ff600000ff600000ff600000ff000000ffffffffffffffffff
-// 018:ff000000ff000000ff066006ff066006ff000000ff000000ffffffffffffffff
-// 019:000000ff000000ff600660ff600660ff000000ff000000ffffffffffffffffff
+// 018:ff000066ff000600ff006000ff660000ff000000ff000000ffffffffffffffff
+// 019:000000ff600600ff060060ff006666ff000060ff000600ffffffffffffffffff
 // 032:eeeeeeeeeeeeeeeeee000000ee000006ee000006ee000006ee000006ee066666
 // 033:eeeeeeeeeeeeeeee000000ee600000ee600000ee600000ee600000ee666660ee
-// 034:eeeeeeeeeeeeeeeeee000000ee000000ee000000ee000000ee000000ee000000
-// 035:eeeeeeeeeeeeeeee000000ee000000ee000000ee000000ee000000ee000000ee
+// 034:eeeeeeeeeeeeeeeeee000000ee000000ee660000ee006000ee000600ee000066
+// 035:eeeeeeeeeeeeeeee000600ee000060ee006666ee060060ee600600ee000000ee
 // 048:ee066666ee000006ee000006ee000006ee000006ee000000eeeeeeeeeeeeeeee
 // 049:666660ee600000ee600000ee600000ee600000ee000000eeeeeeeeeeeeeeeeee
-// 050:ee000000ee000000ee066006ee066006ee000000ee000000eeeeeeeeeeeeeeee
-// 051:000000ee000000ee600660ee600660ee000000ee000000eeeeeeeeeeeeeeeeee
+// 050:ee000066ee000600ee006000ee660000ee000000ee000000eeeeeeeeeeeeeeee
+// 051:000000ee600600ee060060ee006666ee000060ee000600eeeeeeeeeeeeeeeeee
 // </TILES>
+
+// <MAP>
+// 001:000000000000000000000000000000000000000000404000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+// 002:000000000000000000000000000000000040404040400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+// 003:000000000000000000000000000000004040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+// 004:000000000000000000000000000000404000004040404000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+// 005:000000000000000000000000000000404000404000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+// 006:000000000000000000000000000000004040404040404000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+// 007:000000000000000000000000000000000040404040404040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+// </MAP>
 
 // <PALETTE>
 // 000:16171a7f0622d62411ff8426ffd100fafdffff80a4ff267494216a43006723497568aed4bfff3c10d275007899002859
