@@ -48,7 +48,7 @@ class Grid
                 current = current.r
             }
         }
-
+        size = rows*cols
         focus = nodes[0]
     }
 

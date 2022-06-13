@@ -64,11 +64,13 @@ include("Clickable.Tile")
 include("Buttons.Button")
 include("Buttons.AddPlayer")
 include("Buttons.Randomize")
+include("Buttons.Digit")
 
 include("Boards.Grid")
 include("Boards.LetterBoard")
 include("Boards.PlayerBoard")
 include("Boards.RacerBoard")
+include("Boards.Confirmation")
 
 
 class Game
@@ -77,13 +79,15 @@ class Game
     letters = null
     board = null
     focus = null
+    randomSeed = null
     constructor()
     {
         players = PlayerBoard()
         letters = LetterBoard()
         board = RacerBoard()
+        randomSeed = Confirmation()
 
-        focus = players
+        focus = randomSeed
         players.Push()
     }
 
@@ -99,6 +103,12 @@ class Game
         if (STATE == 1)
         {
             letters.Draw()
+        }
+
+        if (STATE == 2)
+        {
+            focus = randomSeed
+            randomSeed.Draw()
         }
     }
 
@@ -149,6 +159,7 @@ function TIC()
 
 
 
+
 // <TILES>
 // 000:ffffffffffffffffff000000ff000006ff000006ff000006ff000006ff066666
 // 001:ffffffffffffffff000000ff600000ff600000ff600000ff600000ff666660ff
@@ -166,6 +177,14 @@ function TIC()
 // 049:666660ee600000ee600000ee600000ee600000ee000000eeeeeeeeeeeeeeeeee
 // 050:ee000066ee000600ee006000ee660000ee000000ee000000eeeeeeeeeeeeeeee
 // 051:000000ee600600ee060060ee006666ee000060ee000600eeeeeeeeeeeeeeeeee
+// 064:fffffffff0000000f0040404f0044404f0004004f0004004f0004004ffffffff
+// 065:ffffffff0000000f4044400f0040000f4044400f0000400f4044400fffffffff
+// 066:fffffffff0000000f0044440f0040040f0040040f0040040f0040040ffffffff
+// 067:ffffffff0000000f0444400f0400400f0400400f0400400f0444400fffffffff
+// 080:eeeeeeeee0000000e0040404e0044404e0004004e0004004e0004004eeeeeeee
+// 081:eeeeeeee0000000e4044400e0040000e4044400e0000400e4044400eeeeeeeee
+// 082:eeeeeeeee0000000e0044440e0040040e0040040e0040040e0040040eeeeeeee
+// 083:eeeeeeee0000000e0444400e0400400e0400400e0400400e0444400eeeeeeeee
 // </TILES>
 
 // <MAP>

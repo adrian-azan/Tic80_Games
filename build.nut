@@ -236,7 +236,6 @@ class Button extends Clickable
     constructor(xpos,ypos,s,sp)
     {
         base.constructor(xpos,ypos,s)
-        trace(sp)
         sprite=sp
     }
 
@@ -247,7 +246,7 @@ class Button extends Clickable
 
     function DrawH()
     {
-        spr(sprite+32,x,y,-1,1,0,0,size[0]/8,size[1]/8)
+        spr(sprite+size[1]*2,x,y,-1,1,0,0,size[0]/8,size[1]/8)
     }
 }
 // [/included Buttons.Button]
@@ -258,7 +257,7 @@ class AddPlayer extends Button
     players = null
     constructor(s,sp,p)
     {
-        base.constructor(0,0,s,sp)
+        base.constructor(50,50,s,sp)
         players = p
     }
 
@@ -289,10 +288,48 @@ class Randomize extends Button
 {
     function A(...)
     {
-        vargv[1].RandomBoard()
+        STATE = 2
     }
 }
 // [/included Buttons.Randomize]
+// [included Buttons.Digit]
+
+class Digit
+{
+    value = null
+    X = null
+    Y = null
+    constructor(x, y)
+    {
+        value = 0
+        X = x
+        Y = y
+    }
+
+    function Add()
+    {
+        value++
+        value %= 10
+    }
+
+    function Sub()
+    {
+        value--
+        if (value < 0)
+            value = 9
+    }
+
+    function Draw()
+    {
+        print(value,X,Y,11)
+    }
+
+    function DrawH()
+    {
+        print(value,X,Y,4)
+    }
+}
+// [/included Buttons.Digit]
 
 // [included Boards.Grid]
 
@@ -346,7 +383,7 @@ class Grid
                 current = current.r
             }
         }
-
+        size = rows*cols
         focus = nodes[0]
     }
 
@@ -822,6 +859,80 @@ class RacerBoard extends Grid
     }
 }
 // [/included Boards.RacerBoard]
+// [included Boards.Confirmation]
+
+class Confirmation extends Grid
+{
+    X = null
+    Y = null
+    constructor()
+    {
+        base.constructor(4,1)
+        X = 20
+        Y = 20
+        size = 5
+        nodes.top().r = Node()
+
+        nodes[0].b = nodes[1]
+        nodes[1].b = nodes[2]
+        nodes[2].b = nodes.top()
+
+
+        nodes[1].t = nodes[0]
+        nodes[2].t = nodes[1]
+        nodes.top().t = nodes[2]
+
+
+        nodes[0].data = Digit(X+8,Y+10)
+        nodes[1].data = Digit(X+8,Y+18)
+        nodes[2].data = Digit(X+8,Y+26)
+
+        nodes.top().data = Button(X+2,Y+34,[16,8],64)
+        nodes.top().r.data = Button(X+22, Y+34,[16,8],66)
+        nodes.top().r.l = nodes.top()
+    }
+
+    function Next()
+    {
+        base.Next()
+        if (focus.data.getclass() == Digit)
+            focus.data.Add()
+    }
+
+    function Prev()
+    {
+        base.Prev()
+        if (focus.data.getclass() == Digit)
+            focus.data.Sub()
+    }
+
+    function A(...)
+    {
+        if (focus == nodes.top())
+        {
+            local seed = nodes[0].data.value * 100
+            seed += nodes[1].data.value * 10
+            seed += nodes[2].data.value
+            srand(seed)
+            vargv[0].RandomBoard()
+            STATE = 0
+        }
+
+        if (focus == nodes.top().r)
+        {
+            STATE = 0
+        }
+    }
+
+    function Draw()
+    {
+        rect(X,Y,40,50,15)
+        print("SEED:"X+2,Y+2,4)
+        base.Draw()
+    }
+
+}
+// [/included Boards.Confirmation]
 
 
 class Game
@@ -830,13 +941,15 @@ class Game
     letters = null
     board = null
     focus = null
+    randomSeed = null
     constructor()
     {
         players = PlayerBoard()
         letters = LetterBoard()
         board = RacerBoard()
+        randomSeed = Confirmation()
 
-        focus = players
+        focus = randomSeed
         players.Push()
     }
 
@@ -852,6 +965,12 @@ class Game
         if (STATE == 1)
         {
             letters.Draw()
+        }
+
+        if (STATE == 2)
+        {
+            focus = randomSeed
+            randomSeed.Draw()
         }
     }
 
@@ -902,6 +1021,7 @@ function TIC()
 
 
 
+
 // <TILES>
 // 000:ffffffffffffffffff000000ff000006ff000006ff000006ff000006ff066666
 // 001:ffffffffffffffff000000ff600000ff600000ff600000ff600000ff666660ff
@@ -919,6 +1039,14 @@ function TIC()
 // 049:666660ee600000ee600000ee600000ee600000ee000000eeeeeeeeeeeeeeeeee
 // 050:ee000066ee000600ee006000ee660000ee000000ee000000eeeeeeeeeeeeeeee
 // 051:000000ee600600ee060060ee006666ee000060ee000600eeeeeeeeeeeeeeeeee
+// 064:fffffffff0000000f0040404f0044404f0004004f0004004f0004004ffffffff
+// 065:ffffffff0000000f4044400f0040000f4044400f0000400f4044400fffffffff
+// 066:fffffffff0000000f0044440f0040040f0040040f0040040f0040040ffffffff
+// 067:ffffffff0000000f0444400f0400400f0400400f0400400f0444400fffffffff
+// 080:eeeeeeeee0000000e0040404e0044404e0004004e0004004e0004004eeeeeeee
+// 081:eeeeeeee0000000e4044400e0040000e4044400e0000400e4044400eeeeeeeee
+// 082:eeeeeeeee0000000e0044440e0040040e0040040e0040040e0040040eeeeeeee
+// 083:eeeeeeee0000000e0444400e0400400e0400400e0400400e0444400eeeeeeeee
 // </TILES>
 
 // <MAP>
